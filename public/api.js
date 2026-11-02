@@ -8,7 +8,7 @@ export async function api(route,body,extra={}){
  const response=await fetch(config.apiBase+route,{method:body===undefined?'GET':'POST',headers:{...(body===undefined?{}:{'Content-Type':'application/json'}),...(token?{Authorization:'Bearer '+token}:{}),...extra},body:body===undefined?undefined:JSON.stringify(body),credentials:config.apiBase?'omit':'same-origin',signal:AbortSignal.timeout(90000)});
  const data=await response.json().catch(()=>({error:'Service returned an unexpected response'}));
  if(response.status===401){token=null;sessionStorage.removeItem(key);window.dispatchEvent(new Event('session-expired'))}
- if(!response.ok)throw Error(data.error||'Request failed');
+ if(!response.ok){const error=Error(data.error||'Request failed');error.status=response.status;throw error}
  if(route==='/api/login'&&data.token){token=data.token;sessionStorage.setItem(key,token)}
  if(route==='/api/logout'){token=null;sessionStorage.removeItem(key)}
  return data;

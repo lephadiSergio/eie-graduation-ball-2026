@@ -2,3 +2,5 @@
 
 
 .mode-banner{padding:18px 22px;border:1px solid #d8ba79;background:#342b16;color:#ffe1a0;margin:24px 0 16px;font-size:14px}.test-tools{display:flex;gap:12px;flex-wrap:wrap;align-items:center;color:#a9afa6;font-size:12px;margin-bottom:20px}textarea{display:block;width:100%;padding:12px;background:#0d1110;color:#fff;border:1px solid #495044;border-radius:3px;margin:6px 0;font:inherit;overflow-wrap:anywhere}dialog{color:#f3eee3;background:#151b17;border:1px solid #d8ba79;max-width:560px;width:92%;border-radius:6px;padding:28px}dialog::backdrop{background:#000b}dialog img{display:block;margin:20px auto;max-width:100%;height:auto}dialog h2{margin-top:20px}hr{border:0;border-top:1px solid #343a32;margin:28px 0}#reader video{max-width:100%}#reader button{margin:6px}#testTools button{min-height:44px}
+
+.cancelled{background:#641e28;color:#fff}#operations{margin-top:24px}#diagnosticsResult{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}#pendingNotice{color:#ffe1a0}button{min-height:44px}

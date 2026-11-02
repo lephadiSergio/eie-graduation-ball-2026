@@ -1,16 +1,41 @@
 services:
   - type: web
-    name: eie-graduation-ball
+    name: eie-graduation-ball-2026
     runtime: node
     plan: free
     buildCommand: corepack pnpm install --frozen-lockfile --ignore-scripts
-    startCommand: npm start
+    startCommand: node server.js
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: 22
       - key: SESSION_SECRET
         generateValue: true
       - key: QR_SECRET
         generateValue: true
-# Add remaining .env.example values in the Render dashboard before first deployment.
+      - key: ISSUANCE_ENABLED
+        value: "false"
+      - key: MAIL_WORKER_ENABLED
+        value: "true"
+      - key: ADMIN_ID
+        value: eie-ball-team
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ADMIN_PASSWORD_HASH
+        sync: false
+      - key: SCANNER_PASSWORD_HASH
+        sync: false
+      - key: GMAIL_USER
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REFRESH_TOKEN
+        sync: false

@@ -8,9 +8,11 @@ export async function demoRequest(route,body,headers={}){
  if(route==='/api/login'){sessionStorage.setItem('eie-demo-login','1');return {ok:true}}
  if(route==='/api/logout'){sessionStorage.removeItem('eie-demo-login');return {ok:true}}
  if(!sessionStorage.getItem('eie-demo-login')){window.dispatchEvent(new Event('session-expired'));throw Error('Enter the test workspace to continue')}
- if(route==='/api/session')return {admin:'demo-staff'};
+ if(route==='/api/session')return {admin:'demo-staff',role:'admin'};
  const url=new URL(route,location.origin);
  if(route==='/api/reset-demo'){await transaction(['tickets','orders'],(tx,done)=>{tx.objectStore('tickets').clear();tx.objectStore('orders').clear();done({ok:true})});return {ok:true}}
+ if(route==='/api/stats')return transaction(['tickets'],(tx,done)=>{const r=tx.objectStore('tickets').getAll();r.onsuccess=()=>done({total:r.result.length,checked_in:r.result.filter(t=>t.status==='Checked In').length,sales_cents:r.result.filter(t=>t.status!=='Cancelled').reduce((n,t)=>n+t.price_cents,0)})});
+ if(route.endsWith('/cancel'))return transaction(['tickets'],(tx,done)=>{const store=tx.objectStore('tickets'),r=store.get(route.split('/')[3]);r.onsuccess=()=>{if(r.result?.status==='Issued'){r.result.status='Cancelled';store.put(r.result)}done({ok:true})}});
  if(route==='/api/tickets'&&body){
   const count=body.option==='EIE Double Special'?2:1;
   if(!Object.hasOwn(prices,body.option)||!body.paymentConfirmed||body.attendees?.length!==count)throw Error('Check category, attendees and payment confirmation');
@@ -22,7 +24,7 @@ export async function demoRequest(route,body,headers={}){
  if(route==='/api/scan'||route==='/api/manual-check-in'){
   const id=route==='/api/scan'?(typeof body.payload==='string'&&body.payload.startsWith('EIE2026-DEMO:')?body.payload.slice(13):null):body.id;
   if(!id)return {result:'invalid'};
-  return transaction(['tickets'],(tx,done)=>{const store=tx.objectStore('tickets');const request=store.get(id);request.onsuccess=()=>{const t=request.result;if(!t||(route==='/api/scan'&&t.payload!==body.payload)){done({result:'invalid'});return}if(t.status==='Checked In'){done({result:'duplicate',ticket:t});return}t.status='Checked In';t.checked_in_at=new Date().toISOString();t.scanned_by='demo-staff';store.put(t);done({result:'valid',ticket:t})}});
+  return transaction(['tickets'],(tx,done)=>{const store=tx.objectStore('tickets');const request=store.get(id);request.onsuccess=()=>{const t=request.result;if(!t||(route==='/api/scan'&&t.payload!==body.payload)){done({result:'invalid'});return}if(t.status==='Cancelled'){done({result:'cancelled',ticket:t});return}if(t.status==='Checked In'){done({result:'duplicate',ticket:t});return}t.status='Checked In';t.checked_in_at=new Date().toISOString();t.scanned_by='demo-staff';store.put(t);done({result:'valid',ticket:t})}});
  }
  if(route.endsWith('/retry'))return {ok:true};
  throw Error('Unsupported test action');
