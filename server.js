@@ -73,7 +73,7 @@ const vendors={'html5-qrcode.js':'html5-qrcode/html5-qrcode.min.js','qrcode.js':
 for(const [name,file] of Object.entries(vendors))app.get('/vendor/'+name,(_,res)=>res.sendFile(path.join(root,'node_modules',file)));
 app.use(express.static(path.join(root,'public'),{index:'index.html'}));
 app.get(['/admin','/scan'],(_,res)=>res.sendFile(path.join(root,'public/index.html')));
-app.use((err,req,res,next)=>{console.error(JSON.stringify({event:'request_failed',path:req.path,type:err.name,code:err.code}));const status=err instanceof DatabaseError&&err.status===409?409:err.status===400?400:503;res.status(status).json({error:status===409?err.message:status===400?'Invalid JSON request':'Service temporarily unavailable. Check the roster and retry using the same order.'})});
+app.use((err,req,res,next)=>{console.error(JSON.stringify({event:'request_failed',path:req.path,type:err.name,status:err.status,code:err.code}));const status=err instanceof DatabaseError&&err.status===409?409:err.status===400?400:503;res.status(status).json({error:status===409?err.message:status===400?'Invalid JSON request':'Service temporarily unavailable. Check the roster and retry using the same order.'})});
 const server=app.listen(process.env.PORT||3000,'0.0.0.0',()=>console.log('EIE Ball server ready'));
 if(mailConfigured()&&process.env.MAIL_WORKER_ENABLED!=='false')startMailWorker();
 async function shutdown(){server.close();await stopMailWorker();process.exit(0)}
