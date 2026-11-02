@@ -4,11 +4,13 @@ import http from 'node:http';
 import {spawn} from 'node:child_process';
 import {passwordHash,qrToken} from '../lib/security.js';
 import {ticketPDF} from '../lib/pdf.js';
-import {sendTicket} from '../lib/mail.js';
+import {sendTicket,sendTestEmail} from '../lib/mail.js';
 
 const ticket={id:'EIE-GB-000000000000000000000000',attendee_name:'Sample Attendee',student_number:'1234567',email:'test@example.com',ticket_option:'EIE Single',price_cents:35000,status:'Issued'};
 
 test('PDF and Gmail MIME composition over mocked HTTPS',async()=>{process.env.QR_SECRET='q'.repeat(32);const pdf=await ticketPDF(ticket);assert.equal(pdf.subarray(0,5).toString(),'%PDF-');assert.ok(pdf.length>5000);const original=globalThis.fetch;let sent=false;globalThis.fetch=async(url,options)=>{if(url.includes('oauth2'))return {ok:true,json:async()=>({access_token:'test'})};const raw=Buffer.from(JSON.parse(options.body).raw,'base64url').toString();assert.match(raw,/application\/pdf/);assert.match(raw,/Confirmed: Your Ticket/);sent=true;return {ok:true}};try{await sendTicket(ticket);assert.equal(sent,true)}finally{globalThis.fetch=original}});
+
+test('email delivery test sends no ticket or QR attachment',async()=>{process.env.MAIL_FROM='eiesc.chairperson@example.edu';process.env.GMAIL_USER='delegate@example.edu';const original=globalThis.fetch;let raw='';globalThis.fetch=async(url,options)=>{if(url.includes('oauth2'))return {ok:true,json:async()=>({access_token:'test'})};raw=Buffer.from(JSON.parse(options.body).raw,'base64url').toString();return {ok:true}};try{await sendTestEmail('controlled@example.com');assert.match(raw,/controlled@example.com/);assert.match(raw,/eiesc\.chairperson@example\.edu/);assert.match(raw,/Email delivery test/);assert.match(raw,/No ticket has been created/);assert.doesNotMatch(raw,/application\/pdf|EIE-GB-/)}finally{globalThis.fetch=original}});
 
 test('server roles, cookie revocation, origin and protected PDF routes',async()=>{
  const sessions=new Map();let ticketRow=ticket;

@@ -8,6 +8,7 @@ import {db,rpc,DatabaseError} from './lib/db.js';
 import {passwordOK,sign,verify,qrID} from './lib/security.js';
 import {prepareOrder} from './lib/issuance.js';
 import {ticketPDF} from './lib/pdf.js';
+import {sendTestEmail} from './lib/mail.js';
 import {mailConfigured,issuanceEnabled} from './lib/readiness.js';
 import {startMailWorker,stopMailWorker} from './lib/worker.js';
 import {acceptanceProbe} from './lib/diagnostics.js';
@@ -50,6 +51,13 @@ app.get('/health',(_,res)=>res.json({ok:true}));
 app.use('/api',auth);
 app.get('/api/session',(req,res)=>res.json({admin:req.admin,role:req.session.role}));
 app.get('/api/readiness',manager,async(_,res)=>{await rpc('event_stats');res.json({database:true,mail_configured:mailConfigured(),issuance_enabled:issuanceEnabled(),scanner_login_configured:Boolean(process.env.SCANNER_PASSWORD_HASH)})});
+app.post('/api/email-test',manager,rateLimit({windowMs:60*60*1000,limit:3,standardHeaders:'draft-8',legacyHeaders:false}),async(req,res)=>{
+ if(!mailConfigured())return res.status(503).json({error:'Email credentials are incomplete. Check Gmail environment settings in Render.'});
+ const to=typeof req.body.email==='string'?req.body.email.trim():'';
+ if(to.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to))return res.status(400).json({error:'Enter a valid test email address.'});
+ try{await sendTestEmail(to);res.json({ok:true})}
+ catch(e){console.error(JSON.stringify({event:'email_test_failed',type:e.name,status:e.status,code:e.code}));res.status(502).json({error:e.message.startsWith('Gmail ')?e.message:'Test email failed. Check the OAuth and sender settings in Render.'})}
+});
 app.get('/api/stats',manager,async(_,res)=>res.json(await rpc('event_stats')));
 app.get('/api/tickets',manager,async(req,res)=>{const offset=Math.min(100000,Math.max(0,Number.parseInt(req.query.offset)||0));res.json(await db('tickets?is_test=eq.false&select=*&order=issued_at.desc,id&limit=200&offset='+offset))});
 app.post('/api/tickets',manager,async(req,res)=>{
