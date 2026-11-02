@@ -83,17 +83,17 @@ $$;
 
 create function public.claim_mail_batch(p_limit integer default 2)
 returns setof jsonb language plpgsql security definer set search_path='' as $$
-declare j public.mail_jobs; t public.tickets;
+declare job_row public.mail_jobs; ticket_row public.tickets;
 begin
- for j in select m.* from public.mail_jobs m join public.tickets t on t.id=m.ticket_id
+ for job_row in select m.* from public.mail_jobs m join public.tickets guest on guest.id=m.ticket_id
   where m.attempts<5 and m.next_attempt_at<=now() and (m.locked_until is null or m.locked_until<now())
-  and t.status<>'Cancelled' and t.email_status<>'Sent' and not t.is_test
+  and guest.status<>'Cancelled' and guest.email_status<>'Sent' and not guest.is_test
   order by m.next_attempt_at limit least(2,greatest(1,p_limit)) for update of m skip locked
  loop
   update public.mail_jobs set attempts=attempts+1,locked_until=now()+interval '3 minutes',lease_id=pg_catalog.gen_random_uuid()
-  where ticket_id=j.ticket_id returning * into j;
-  update public.tickets set email_status='Sending' where id=j.ticket_id returning * into t;
-  return next jsonb_build_object('ticket',to_jsonb(t),'lease_id',j.lease_id,'attempts',j.attempts);
+  where ticket_id=job_row.ticket_id returning * into job_row;
+  update public.tickets set email_status='Sending' where id=job_row.ticket_id returning * into ticket_row;
+  return next jsonb_build_object('ticket',to_jsonb(ticket_row),'lease_id',job_row.lease_id,'attempts',job_row.attempts);
  end loop;
 end $$;
 
