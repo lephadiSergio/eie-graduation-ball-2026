@@ -1,0 +1,26 @@
+{
+  "name": "eie-ball",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js",
+    "test": "node --test",
+    "build:pages": "node scripts/build-pages.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
+    "html5-qrcode": "2.3.8",
+    "jspdf": "4.2.1",
+    "nodemailer": "^10.3.1",
+    "pdfkit": "^0.17.2",
+    "qrcode": "^1.5.4",
+    "qrcode-generator": "2.0.4"
+  },
+  "packageManager": "pnpm@10.11.0"
+}

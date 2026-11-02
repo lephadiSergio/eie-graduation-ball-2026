@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: eie-graduation-ball
+    runtime: node
+    plan: free
+    buildCommand: corepack pnpm install --frozen-lockfile --ignore-scripts
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: QR_SECRET
+        generateValue: true
+# Add remaining .env.example values in the Render dashboard before first deployment.
